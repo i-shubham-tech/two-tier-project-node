@@ -1,0 +1,50 @@
+version: "3.8"
+services:
+  mysql:
+    container_name: mysql
+    image: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: docker
+    ports:
+      - "3307:3306"
+    volumes:
+      - "D:/dockerproject/volume/mysql:/var/lib/mysql"
+    networks:
+      - mynetwork
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-hlocalhost", "-uroot", "-pdocker"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  two-tier-backend:
+    container_name: "two-tier-backend"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: "my-two-tier-backend"
+    ports:
+      - "8080:3000"
+    networks:
+      - mynetwork
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_ROOT_USER: root
+      MYSQL_DATABASE: "two-tier-project"
+      MYSQL_ROOT_PASSWORD: docker
+    depends_on:
+      mysql:
+       condition:  service_healthy
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "curl", "-f", "http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+networks:
+  mynetwork:
+    driver: bridge

@@ -1,21 +1,24 @@
 #importing base image
-FROM node:20-alpine
+FROM node:20-alpine as builder
 
 #creating work directory
 WORKDIR /app
 
 #copying dependency from source to destination
 
-COPY  package.json /app/package.json
+COPY  package.json ./
 
 #installing all dependency
 
 RUN npm install
 
-ENV PORT=3000
+FROM node:20-slim
 
-#copying source code 
+COPY --from=builder /app/node_modules /app/node_modules
+
 COPY src /app/src
+
+ENV PORT=3000
 
 EXPOSE 3000
 
